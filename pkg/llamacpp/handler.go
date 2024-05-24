@@ -19,15 +19,18 @@ func NewLlamacppHandler(
 	lineByLine bool,
 	endpoints []handler.Endpoint,
 ) http.Handler {
-	return newLlamacppHandlerInternal(lineByLine, endpoints, handleLlamacpp)
+	return newLlamacppHandlerInternal(
+		lineByLine,
+		handleLlamacpp,
+		NewQueue(endpoints),
+	)
 }
 
 func newLlamacppHandlerInternal(
 	lineByLine bool,
-	endpoints []handler.Endpoint,
 	handle handleFunc,
+	queue *Queue,
 ) http.Handler {
-	queue := NewQueue(endpoints)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		l := logging.FromContext(ctx).With("function", "handler.<request handler>")
@@ -92,23 +95,22 @@ func NewLlamacppChatHandler(
 	return newLlamacppChatHandlerInternal(
 		logger,
 		lineByLine,
-		endpoints,
 		chatTemplate,
 		stop,
 		handleLlamacpp,
+		NewQueue(endpoints),
 	)
 }
 
 func newLlamacppChatHandlerInternal(
 	logger *slog.Logger,
 	lineByLine bool,
-	endpoints []handler.Endpoint,
 	chatTemplate string,
 	stop []string,
 	handle handleFunc,
+	queue *Queue,
 ) http.Handler {
 	logger.Warn("LlamacppChatHandler is experimental")
-	queue := NewQueue(endpoints)
 	tmpl, err := template.New("chat").Parse(chatTemplate)
 	if err != nil {
 		logger.Error("Error parsing template", err)

@@ -45,6 +45,11 @@ func newLlamacppHandlerInternal(
 			return
 		}
 
+		if req.Prompt == "" {
+			http.Error(w, "missing prompt", http.StatusBadRequest)
+			return
+		}
+
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			l.Warn("ResponseWriter does not support Flusher.")
@@ -140,6 +145,11 @@ func newLlamacppChatHandlerInternal(
 		if err != nil {
 			l.Info("Error unmarshaling Body", err)
 			http.Error(w, "error unmarshaling request", http.StatusBadRequest)
+			return
+		}
+
+		if len(chatReq.Messages) == 0 {
+			http.Error(w, "no messages found", http.StatusBadRequest)
 			return
 		}
 

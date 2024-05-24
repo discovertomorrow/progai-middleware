@@ -19,7 +19,18 @@ func NewLlamacppHandler(
 	lineByLine bool,
 	endpoints []handler.Endpoint,
 ) http.Handler {
-	queue := NewQueue(endpoints)
+	return newLlamacppHandlerInternal(
+		lineByLine,
+		handleLlamacpp,
+		NewQueue(endpoints),
+	)
+}
+
+func newLlamacppHandlerInternal(
+	lineByLine bool,
+	handle handleFunc,
+	queue *Queue,
+) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		l := logging.FromContext(ctx).With("function", "handler.<request handler>")
@@ -52,7 +63,7 @@ func NewLlamacppHandler(
 
 		w.Header().Set("Content-Type", "application/json")
 
-		if err := handleLlamacpp(
+		if err := handle(
 			ctx,
 			slot,
 			req,
@@ -81,8 +92,25 @@ func NewLlamacppChatHandler(
 	chatTemplate string,
 	stop []string,
 ) http.Handler {
+	return newLlamacppChatHandlerInternal(
+		logger,
+		lineByLine,
+		chatTemplate,
+		stop,
+		handleLlamacpp,
+		NewQueue(endpoints),
+	)
+}
+
+func newLlamacppChatHandlerInternal(
+	logger *slog.Logger,
+	lineByLine bool,
+	chatTemplate string,
+	stop []string,
+	handle handleFunc,
+	queue *Queue,
+) http.Handler {
 	logger.Warn("LlamacppChatHandler is experimental")
-	queue := NewQueue(endpoints)
 	tmpl, err := template.New("chat").Parse(chatTemplate)
 	if err != nil {
 		logger.Error("Error parsing template", err)
@@ -155,7 +183,7 @@ func NewLlamacppChatHandler(
 		l.Info("Got slot")
 
 		llama := func(req Request, yield func([]byte) bool, stream bool) error {
-			return handleLlamacpp(ctx, slot, req, yield, stream)
+			return handle(ctx, slot, req, yield, stream)
 		}
 
 		active, err := handleTools(

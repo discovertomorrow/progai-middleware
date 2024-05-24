@@ -10,6 +10,8 @@ import (
 	"github.com/discovertomorrow/progai-middleware/pkg/logging"
 )
 
+type handleFunc func(ctx context.Context, slot Slot, req Request, writeLine func(line []byte) bool, lineByLine bool) error
+
 func handleLlamacpp(
 	ctx context.Context,
 	slot Slot,

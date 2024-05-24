@@ -31,17 +31,6 @@ func (m *MockHandleFunc) Handle(
 // Setup function to initialize common objects
 func setup() (*MockHandleFunc, []handler.Endpoint) {
 	mockHandle := new(MockHandleFunc)
-	mockHandle.On(
-		"Handle",
-		mock.Anything,
-		mock.MatchedBy(func(slot Slot) bool {
-			return slot.endpointSlot.endpoint == "http://localhost:8080"
-		}),
-		mock.Anything,
-		mock.Anything,
-		mock.Anything,
-	).Return(nil)
-
 	endpoints := []handler.Endpoint{
 		{Endpoint: "http://localhost:8080", Parallel: 1},
 	}
@@ -64,6 +53,19 @@ func TestNewLlamacppHandler(t *testing.T) {
 		req := httptest.NewRequest("POST", "/", strings.NewReader(reqBody))
 		w := httptest.NewRecorder()
 
+		mockHandle.On(
+			"Handle",
+			mock.Anything,
+			mock.MatchedBy(func(slot Slot) bool {
+				return slot.endpointSlot.endpoint == "http://localhost:8080"
+			}),
+			mock.MatchedBy(func(req Request) bool {
+				return req.Prompt == "Hi"
+			}),
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
+
 		handler.ServeHTTP(w, req)
 
 		resp := w.Result()
@@ -79,6 +81,15 @@ func TestNewLlamacppHandler(t *testing.T) {
 		reqBody := `{}` // Missing prompt
 		req := httptest.NewRequest("POST", "/", strings.NewReader(reqBody))
 		w := httptest.NewRecorder()
+
+		mockHandle.On(
+			"Handle",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
 
 		handler.ServeHTTP(w, req)
 
@@ -128,6 +139,19 @@ func TestNewLlamacppChatHandler(t *testing.T) {
 		req := httptest.NewRequest("POST", "/", strings.NewReader(reqBody))
 		w := httptest.NewRecorder()
 
+		mockHandle.On(
+			"Handle",
+			mock.Anything,
+			mock.MatchedBy(func(slot Slot) bool {
+				return slot.endpointSlot.endpoint == "http://localhost:8080"
+			}),
+			mock.MatchedBy(func(req Request) bool {
+				return req.Prompt == " [INST] <system> You are a helpful assistant. </system> [/INST] [INST] Hello! [/INST]"
+			}),
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
+
 		handler.ServeHTTP(w, req)
 
 		resp := w.Result()
@@ -146,6 +170,15 @@ func TestNewLlamacppChatHandler(t *testing.T) {
 }`
 		req := httptest.NewRequest("POST", "/", strings.NewReader(reqBody))
 		w := httptest.NewRecorder()
+
+		mockHandle.On(
+			"Handle",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
 
 		handler.ServeHTTP(w, req)
 

@@ -163,10 +163,33 @@ func TestNewLlamacppChatHandler(t *testing.T) {
 	})
 
 	// Test case where prompt is missing
-	t.Run("WithoutPrompt", func(t *testing.T) {
+	t.Run("WithZeroMessages", func(t *testing.T) {
 		reqBody := `{
   "model": "gpt-4o",
   "messages": []
+}`
+		req := httptest.NewRequest("POST", "/", strings.NewReader(reqBody))
+		w := httptest.NewRecorder()
+
+		mockHandle.On(
+			"Handle",
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+			mock.Anything,
+		).Return(nil)
+
+		handler.ServeHTTP(w, req)
+
+		resp := w.Result()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status 400; got %v", resp.Status)
+		}
+	})
+	t.Run("WithoutMessages", func(t *testing.T) {
+		reqBody := `{
+  "model": "gpt-4o"
 }`
 		req := httptest.NewRequest("POST", "/", strings.NewReader(reqBody))
 		w := httptest.NewRecorder()

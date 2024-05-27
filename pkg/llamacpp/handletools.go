@@ -25,7 +25,7 @@ func handleTools(
 	toolCalls *ExpiringMap,
 	prepareChatPrompt func([]openai.Message) (string, error),
 ) (bool, error) {
-	if len(chatReq.Tools) == 0 {
+	if len(chatReq.Tools) == 0 || chatReq.ToolChoice == "none" {
 		return false, nil
 	}
 	// prepare tool list for prompt, return if no tools
@@ -35,10 +35,12 @@ func handleTools(
 		return false, nil
 	}
 	l.Debug("Found Tools")
-	// check if a tool is helpful for the users request, return of not
-	if !checkIfToolHelpful(llama, l, stop, prepareChatPrompt, chatReq.Messages, tools) {
-		l.Debug("Finished Tools: Do NOT use Tool")
-		return false, nil
+	if chatReq.ToolChoice != "required" {
+		// check if a tool is helpful for the users request, return if not
+		if !checkIfToolHelpful(llama, l, stop, prepareChatPrompt, chatReq.Messages, tools) {
+			l.Debug("Finished Tools: Do NOT use Tool")
+			return false, nil
+		}
 	}
 	l.Debug("Get Tool Call")
 	toolCall, err := generateToolCall(llama, l, stop, prepareChatPrompt, chatReq.Messages, tools)

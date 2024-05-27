@@ -5,6 +5,7 @@ package openai
 type ChatRequest struct {
 	Messages    []Message `json:"messages"`
 	Tools       []Tool    `json:"tools"`
+	ToolChoice  string    `json:"tool_choice"`
 	Model       string    `json:"model"`
 	Stream      bool      `json:"stream"`
 	MaxTokens   int       `json:"max_tokens"`

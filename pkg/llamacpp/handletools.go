@@ -36,7 +36,7 @@ func handleTools(
 	}
 	l.Debug("Found Tools")
 	if chatReq.ToolChoice != "required" {
-		// check if a tool is helpful for the users request, return of not
+		// check if a tool is helpful for the users request, return if not
 		if !checkIfToolHelpful(llama, l, stop, prepareChatPrompt, chatReq.Messages, tools) {
 			l.Debug("Finished Tools: Do NOT use Tool")
 			return false, nil

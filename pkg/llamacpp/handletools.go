@@ -68,7 +68,7 @@ func handleTools(
 
 	// write http response: OpenAI API compatible tool response
 	complMsg, finishReason, toolCallID := createToolChatcompletionMessage(tool.Function, arguments)
-	writeChatCompletionResponse(w, stream, llamacppRequestId, model, complMsg, finishReason)
+	writeChatCompletionResponse(w, stream, llamacppRequestId, model, complMsg, finishReason, true, true)
 	// add toolCall to map
 	toolCalls.Set(toolCallID, name)
 	l.Debug("Finished Tools: Tool requested")
@@ -199,7 +199,8 @@ func checkIfToolHelpful(
 			l.Error("Error unmarshaling data", err)
 			return false
 		}
-		helpful = strings.Trim(r.Content, " ") == "H"
+		l.Debug("Helful response", "response", r)
+		helpful = strings.HasPrefix(strings.Trim(r.Content, " "), "H")
 		return true
 	}
 	prompt, err := prepareChatPrompt(ms)

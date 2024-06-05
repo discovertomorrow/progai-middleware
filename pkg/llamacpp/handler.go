@@ -153,6 +153,15 @@ func newLlamacppChatHandlerInternal(
 			return
 		}
 
+		streamIncludeUsage := false
+		if chatReq.StreamOptions != nil {
+			if value, ok := (*chatReq.StreamOptions)["include_usage"]; ok {
+				if includeUsage, valid := value.(bool); valid && includeUsage {
+					streamIncludeUsage = true
+				}
+			}
+		}
+
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			l.Warn("ResponseWriter does not support Flusher.")
@@ -215,16 +224,20 @@ func newLlamacppChatHandlerInternal(
 					http.Error(w, "Error parsing Llama.cpp response", http.StatusInternalServerError)
 					return false
 				}
-
-				if err := writeChatCompletionResponse(
-					w, stream, llamacppRequestId, model,
-					openai.ChatCompletionMessage{Role: "assistant", Content: &content},
-					finish_reason,
-				); err != nil {
-					l.Info("Error writing line", err)
-					return false
+				delta := len(content) > 0
+				if delta || finish_reason != nil {
+					if err := writeChatCompletionResponse(
+						w, stream, llamacppRequestId, model,
+						openai.ChatCompletionMessage{Role: "assistant", Content: &content},
+						finish_reason,
+						delta,
+						streamIncludeUsage,
+					); err != nil {
+						l.Info("Error writing line", err)
+						return false
+					}
+					flusher.Flush()
 				}
-				flusher.Flush()
 				return true
 			},
 			lineByLine,

@@ -16,8 +16,10 @@ func writeChatCompletionResponse(
 	model string,
 	msg openai.ChatCompletionMessage,
 	finish_reason *string,
+	delta bool,
+	usage bool,
 ) error {
-	cr := createChatCompletionResponse(stream, llamacppRequestId, model, msg, finish_reason)
+	cr := createChatCompletionResponse(stream, llamacppRequestId, model, msg, finish_reason, delta, usage)
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
@@ -41,18 +43,32 @@ func createChatCompletionResponse(
 	model string,
 	msg openai.ChatCompletionMessage,
 	finish_reason *string,
+	delta bool,
+	includeUsageInStream bool,
 ) interface{} {
 	var cr interface{}
 
 	if stream {
-		cr = openai.StreamChatResponse{
+		var deltaContent interface{} = openai.EmptyDelta{}
+		if delta {
+			deltaContent = msg
+		}
+		res := openai.StreamChatResponse{
 			Id:      llamacppRequestId,
 			Object:  "chat.completion.chunk",
 			Created: time.Now().Unix(),
 			Model:   model,
 			Choices: []openai.StreamChatResponseChoice{
-				{Delta: msg, FinishReason: finish_reason},
+				{Delta: deltaContent, FinishReason: finish_reason},
 			},
+		}
+		cr = res
+		if includeUsageInStream {
+			var usage *openai.ChatResponseUsage
+			if finish_reason != nil {
+				usage = &openai.ChatResponseUsage{} // TODO: real usage
+			}
+			cr = openai.StreamChatResponseWithUsage{StreamChatResponse: res, Usage: usage}
 		}
 	} else {
 		cr = openai.ChatResponse{

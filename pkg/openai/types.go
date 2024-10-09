@@ -3,15 +3,18 @@ package openai
 // OpenAI
 
 type ChatRequest struct {
-	Messages    []Message `json:"messages"`
-	Tools       []Tool    `json:"tools"`
-	ToolChoice  string    `json:"tool_choice"`
-	Model       string    `json:"model"`
-	Stream      bool      `json:"stream"`
-	MaxTokens   int       `json:"max_tokens"`
-	Temperature *float32  `json:"temperature"`
-	TopP        *float32  `json:"top_p"`
+	Messages      []Message      `json:"messages"`
+	Tools         []Tool         `json:"tools"`
+	ToolChoice    string         `json:"tool_choice"`
+	Model         string         `json:"model"`
+	Stream        bool           `json:"stream"`
+	MaxTokens     int            `json:"max_tokens"`
+	Temperature   *float32       `json:"temperature"`
+	TopP          *float32       `json:"top_p"`
+	StreamOptions *StreamOptions `json:"stream_options"`
 }
+
+type StreamOptions map[string]interface{}
 
 type Message struct {
 	Role       string      `json:"role"`
@@ -44,6 +47,11 @@ type Property struct {
 	Enum        []string `json:"enum"`
 }
 
+type StreamChatResponseWithUsage struct {
+	StreamChatResponse
+	Usage *ChatResponseUsage `json:"usage"`
+}
+
 type StreamChatResponse struct {
 	Id                string                     `json:"id"`
 	Object            string                     `json:"object"`
@@ -54,11 +62,13 @@ type StreamChatResponse struct {
 }
 
 type StreamChatResponseChoice struct {
-	Index        int                   `json:"index"`
-	Delta        ChatCompletionMessage `json:"delta"`
-	Logprobs     *string               `json:"logprobs"`
-	FinishReason *string               `json:"finish_reason"`
+	Index        int         `json:"index"`
+	Delta        interface{} `json:"delta"`
+	Logprobs     *string     `json:"logprobs"`
+	FinishReason *string     `json:"finish_reason"`
 }
+
+type EmptyDelta struct{}
 
 type ChatResponse struct {
 	Id                string               `json:"id"`
@@ -78,7 +88,7 @@ type ChatResponseChoice struct {
 }
 
 type ChatResponseUsage struct {
-	PromptTokens     int `json:"promt_tokens"`
+	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
 	TotalTokens      int `json:"total_tokens"`
 }

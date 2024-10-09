@@ -78,7 +78,7 @@ type ChatResponseChoice struct {
 }
 
 type ChatResponseUsage struct {
-	PromptTokens     int `json:"promt_tokens"`
+	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
 	TotalTokens      int `json:"total_tokens"`
 }

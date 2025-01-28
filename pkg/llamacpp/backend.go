@@ -23,8 +23,8 @@ func handleLlamacpp(
 	l.Debug("Call to llama.cpp competion backend", "pormpt", req.Prompt)
 
 	req.Slot = slot.endpointSlot.slot
-	if req.NPredict < 1 || req.NPredict > 2000 {
-		req.NPredict = 2000
+	if req.NPredict < 1 || req.NPredict > 10000 {
+		req.NPredict = 10000
 	}
 
 	buf := bytes.Buffer{}

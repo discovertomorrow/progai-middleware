@@ -1,5 +1,10 @@
 package openai
 
+import (
+	"encoding/json"
+	"errors"
+)
+
 // OpenAI
 
 type ChatRequest struct {
@@ -18,10 +23,47 @@ type StreamOptions map[string]interface{}
 
 type Message struct {
 	Role       string      `json:"role"`
-	Content    string      `json:"content"`
+	Content    Content     `json:"content"`
 	Name       *string     `json:"name"`
 	ToolCallID *string     `json:"tool_call_id"`
 	ToolCalls  *[]ToolCall `json:"tool_calls"`
+}
+
+// Content is effectively a string in Go, but we give it a custom
+// UnmarshalJSON method so we can handle both string input and
+// array-of-blocks input in the incoming JSON.
+type Content string
+
+// UnmarshalJSON allows Content to handle two forms of JSON:
+//  1. A raw string
+//  2. An array of blocks, from which we take the `text` of the first block
+//     whose `type` is `"text"`.
+func (c *Content) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*c = Content(s)
+		return nil
+	}
+
+	var blocks []struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(data, &blocks); err == nil {
+		// Look for the first block with "type": "text"
+		for _, block := range blocks {
+			if block.Type == "text" {
+				*c = Content(block.Text)
+				return nil
+			}
+		}
+		// If no block with type="text", default to empty string
+		*c = ""
+		return nil
+	}
+
+	// 3. Otherwise, we cannot parse it as a string or an array of blocks
+	return errors.New("content is neither a string nor an array of text blocks")
 }
 
 type Tool struct {

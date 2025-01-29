@@ -24,7 +24,7 @@ func NewOpenAiChatHandler(
 		var req ChatRequest
 		err := dec.Decode(&req)
 		if err != nil {
-			l.Info("Error unmarshaling Body", err)
+			l.Info("Error unmarshaling Body", "error", err)
 			http.Error(w, "error unmarshaling request", http.StatusBadRequest)
 			return
 		}
@@ -38,7 +38,7 @@ func NewOpenAiChatHandler(
 		enc := json.NewEncoder(&buf)
 		enc.SetEscapeHTML(false)
 		if err := enc.Encode(req); err != nil {
-			l.Info("Error encoding request", err)
+			l.Info("Error encoding request", "error", err)
 			http.Error(w, "error encoding request", http.StatusInternalServerError)
 			return
 		}
@@ -56,7 +56,7 @@ func NewOpenAiChatHandler(
 			bytes.NewReader(buf.Bytes()),
 		)
 		if err != nil {
-			l.Error("Error creating request", err)
+			l.Error("Error creating request", "error", err)
 			http.Error(w, "Error creating request", http.StatusInternalServerError)
 			return
 		}
@@ -68,7 +68,7 @@ func NewOpenAiChatHandler(
 			func(line []byte) bool {
 				_, err := w.Write(line)
 				if err != nil {
-					l.Info("Error writing line", err)
+					l.Info("Error writing line", "error", err)
 					return false
 				}
 				flusher.Flush()

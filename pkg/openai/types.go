@@ -3,6 +3,7 @@ package openai
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 )
 
 // OpenAI
@@ -39,30 +40,32 @@ type Content string
 //  2. An array of blocks, from which we take the `text` of the first block
 //     whose `type` is `"text"`.
 func (c *Content) UnmarshalJSON(data []byte) error {
+	// --- First try: see if data is a simple JSON string
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
 		*c = Content(s)
 		return nil
 	}
 
+	// --- Second try: parse data as an array of blocks
 	var blocks []struct {
 		Type string `json:"type"`
 		Text string `json:"text"`
 	}
 	if err := json.Unmarshal(data, &blocks); err == nil {
-		// Look for the first block with "type": "text"
-		for _, block := range blocks {
-			if block.Type == "text" {
-				*c = Content(block.Text)
-				return nil
+		// Collect all text from blocks with `type="text"`
+		var parts []string
+		for _, b := range blocks {
+			if b.Type == "text" {
+				parts = append(parts, b.Text)
 			}
 		}
-		// If no block with type="text", default to empty string
-		*c = ""
+		// Join with newline
+		joined := strings.Join(parts, "\n")
+		*c = Content(joined)
 		return nil
 	}
 
-	// 3. Otherwise, we cannot parse it as a string or an array of blocks
 	return errors.New("content is neither a string nor an array of text blocks")
 }
 

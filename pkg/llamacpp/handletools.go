@@ -68,7 +68,16 @@ func handleTools(
 
 	// write http response: OpenAI API compatible tool response
 	complMsg, finishReason, toolCallID := createToolChatcompletionMessage(tool.Function, arguments)
-	writeChatCompletionResponse(w, stream, llamacppRequestId, model, complMsg, finishReason, true, true)
+	writeChatCompletionResponse(
+		w,
+		stream,
+		llamacppRequestId,
+		model,
+		complMsg,
+		finishReason,
+		true,
+		true,
+	)
 	// add toolCall to map
 	toolCalls.Set(toolCallID, name)
 	l.Debug("Finished Tools: Tool requested")
@@ -149,7 +158,10 @@ func toolToPrompt(tool openai.Tool) string {
 			parType = "int"
 		}
 		parameters = append(parameters, fmt.Sprintf("%s: %s", parameter, parType))
-		parDescs = append(parDescs, fmt.Sprintf("%s: %s %s", parameter, value.Description, strings.Join(value.Enum, ", ")))
+		parDescs = append(
+			parDescs,
+			fmt.Sprintf("%s: %s %s", parameter, value.Description, strings.Join(value.Enum, ", ")),
+		)
 	}
 	return fmt.Sprintf(
 		"%s(%s) # %s (%s)",
@@ -179,7 +191,7 @@ func checkIfToolHelpful(
 	copy(ms, msgs)
 	ms[ml] = openai.Message{
 		Role: "user",
-		Content: fmt.Sprintf(
+		Content: openai.Content(fmt.Sprintf(
 			"Decide if it would be helpful to execute one of the "+
 				"functions to answer the user question. Only consider the question "+
 				"between \"<user-question></user-question>\". Decide now: "+
@@ -188,7 +200,7 @@ func checkIfToolHelpful(
 				"If in doubt, choose NOT HELPFUL.",
 			tools,
 			mu.Content,
-		),
+		)),
 	}
 	l.Debug("Helpful desicion", "helpfulMessage", ms[ml-1])
 	helpful := false
@@ -257,14 +269,14 @@ func generateToolCall(
 	copy(ms, msgs)
 	ms[ml] = openai.Message{
 		Role: "user",
-		Content: fmt.Sprintf(
+		Content: openai.Content(fmt.Sprintf(
 			"Use one of the following functions to answer the user question. "+
 				"<functions>\n%s</functions> <user-question>%s</user-question> "+
 				"Generate the function call. example: "+
 				"CALL: height(building=\"Empire State Building\")",
 			tools,
 			mu.Content,
-		),
+		)),
 	}
 	prompt, err := prepareChatPrompt(ms)
 	if err != nil {
